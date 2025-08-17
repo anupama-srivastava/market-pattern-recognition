@@ -248,13 +248,6 @@ Walk-forward Summary:
 
 MIT License - See LICENSE file for details
 
-## 📞 Support
-
-For support and documentation:
-- 📧 Email: support@market-pattern-recognition.com
-- 💬 Discord: [Join our community](https://discord.gg/market-pattern-recognition)
-- 📖 Documentation: [Read the docs](https://docs.market-pattern-recognition.com)
-
 ---
 
 **🎯 Ready for Production**: This system is battle-tested and ready for real-world trading applications.
