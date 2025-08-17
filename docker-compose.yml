@@ -1,0 +1,215 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_DB: market_patterns
+      POSTGRES_USER: market_user
+      POSTGRES_PASSWORD: market_pass
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./sql/init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - market-network
+
+  # Redis Cache
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes
+    networks:
+      - market-network
+
+  # MLflow Model Registry
+  mlflow:
+    image: python:3.9-slim
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./mlruns:/mlruns
+      - ./src:/app/src
+    working_dir: /app
+    command: >
+      bash -c "pip install mlflow boto3 && 
+               mlflow server --host 0.0.0.0 --port 5000 --backend-store-uri postgresql://market_user:market_pass@postgres:5432/market_patterns --default-artifact-root /mlruns"
+    depends_on:
+      - postgres
+    networks:
+      - market-network
+
+  # Data Ingestion Service
+  data-ingestion:
+    build:
+      context: .
+      dockerfile: services/data-ingestion/Dockerfile
+    ports:
+      - "8001:8000"
+    environment:
+      - REDIS_URL=redis://redis:6379
+      - POSTGRES_URL=postgresql://market_user:market_pass@postgres:5432/market_patterns
+    depends_on:
+      - redis
+      - postgres
+    volumes:
+      - ./data:/app/data
+    networks:
+      - market-network
+
+  # Feature Engineering Service
+  feature-engineering:
+    build:
+      context: .
+      dockerfile: services/feature-engineering/Dockerfile
+    ports:
+      - "8002:8000"
+    environment:
+      - REDIS_URL=redis://redis:6379
+      - POSTGRES_URL=postgresql://market_user:market_pass@postgres:5432/market_patterns
+      - MLFLOW_TRACKING_URI=http://mlflow:5000
+    depends_on:
+      - redis
+      - postgres
+      - mlflow
+    networks:
+      - market-network
+
+  # Model Serving Service
+  model-serving:
+    build:
+      context: .
+      dockerfile: services/model-serving/Dockerfile
+    ports:
+      - "8003:8000"
+    environment:
+      - REDIS_URL=redis://redis:6379
+      - POSTGRES_URL=postgresql://market_user:market_pass@postgres:5432/market_patterns
+      - MLFLOW_TRACKING_URI=http://mlflow:5000
+    depends_on:
+      - redis
+      - postgres
+      - mlflow
+    networks:
+      - market-network
+
+  # Portfolio Optimization Service
+  portfolio-optimization:
+    build:
+      context: .
+      dockerfile: services/portfolio-optimization/Dockerfile
+    ports:
+      - "8004:8000"
+    environment:
+      - REDIS_URL=redis://redis:6379
+      - POSTGRES_URL=postgresql://market_user:market_pass@postgres:5432/market_patterns
+      - MLFLOW_TRACKING_URI=http://mlflow:5000
+    depends_on:
+      - redis
+      - postgres
+      - mlflow
+    networks:
+      - market-network
+
+  # Alert Service
+  alert-service:
+    build:
+      context: .
+      dockerfile: services/alert-service/Dockerfile
+    ports:
+      - "8005:8000"
+    environment:
+      - REDIS_URL=redis://redis:6379
+      - POSTGRES_URL=postgresql://market_user:market_pass@postgres:5432/market_patterns
+      - SLACK_WEBHOOK_URL=${SLACK_WEBHOOK_URL}
+      - DISCORD_WEBHOOK_URL=${DISCORD_WEBHOOK_URL}
+    depends_on:
+      - redis
+      - postgres
+    networks:
+      - market-network
+
+  # API Gateway
+  api-gateway:
+    build:
+      context: .
+      dockerfile: services/api-gateway/Dockerfile
+    ports:
+      - "8080:8080"
+    environment:
+      - DATA_INGESTION_URL=http://data-ingestion:8000
+      - FEATURE_ENGINEERING_URL=http://feature-engineering:8000
+      - MODEL_SERVING_URL=http://model-serving:8000
+      - PORTFOLIO_OPTIMIZATION_URL=http://portfolio-optimization:8000
+      - ALERT_SERVICE_URL=http://alert-service:8000
+    depends_on:
+      - data-ingestion
+      - feature-engineering
+      - model-serving
+      - portfolio-optimization
+      - alert-service
+    networks:
+      - market-network
+
+  # Dashboard
+  dashboard:
+    build:
+      context: .
+      dockerfile: services/dashboard/Dockerfile
+    ports:
+      - "8501:8501"
+    environment:
+      - API_GATEWAY_URL=http://api-gateway:8080
+      - REDIS_URL=redis://redis:6379
+    depends_on:
+      - api-gateway
+      - redis
+    networks:
+      - market-network
+
+  # Prometheus
+  prometheus:
+    image: prom/prometheus:latest
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+    networks:
+      - market-network
+
+  # Grafana
+  grafana:
+    image: grafana/grafana:latest
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./monitoring/grafana/dashboards:/etc/grafana/provisioning/dashboards
+      - ./monitoring/grafana/datasources:/etc/grafana/provisioning/datasources
+    depends_on:
+      - prometheus
+    networks:
+      - market-network
+
+volumes:
+  postgres_data:
+  redis_data:
+  prometheus_data:
+  grafana_data:
+
+networks:
+  market-network:
+    driver: bridge

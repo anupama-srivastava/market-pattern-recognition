@@ -1,0 +1,78 @@
+# Phase 3 Production Dependencies
+
+# Core ML/Data Science
+pandas
+numpy
+scikit-learn
+scipy
+
+# Technical Analysis
+ta-lib
+yfinance
+
+# Sentiment Analysis
+transformers
+torch
+nltk
+vaderSentiment
+praw
+tweepy
+newsapi-python
+
+# Computer Vision
+opencv-python
+pillow
+tensorflow
+
+# Portfolio Optimization
+cvxpy
+cvxopt
+
+# Production Infrastructure
+mlflow
+redis
+streamlit
+fastapi
+uvicorn
+psycopg2-binary
+sqlalchemy
+alembic
+
+# Visualization
+plotly
+dash
+bokeh
+
+# Utilities
+python-dotenv
+schedule
+psutil
+prometheus-client
+
+# Testing
+pytest
+pytest-asyncio
+httpx
+
+# Development
+black
+flake8
+mypy
+pre-commit
+
+# Monitoring
+prometheus-client
+grafana-api
+
+# Security
+python-jose[cryptography]
+passlib[bcrypt]
+python-multipart
+
+# Async
+aiohttp
+aioredis
+asyncpg
+
+# WebSocket
+websockets

@@ -1,0 +1,60 @@
+# Phase 1: Deep Learning & Advanced ML Requirements
+# Core Data Science Libraries
+numpy
+pandas
+scipy
+
+# Deep Learning Framework
+torch
+torchvision
+tensorflow
+keras
+
+# Advanced ML Libraries
+scikit-learn
+xgboost
+lightgbm
+optuna
+
+# Data Visualization
+matplotlib
+seaborn
+plotly
+altair
+
+# Financial Data
+yfinance
+pandas-datareader
+alpha-vantage
+
+# Technical Analysis
+ta-lib
+ta
+vectorbt
+
+# Time Series & Deep Learning
+tsfresh
+prophet
+pytorch-lightning
+
+# Data Pipeline & Streaming
+redis
+celery
+kafka-python
+
+# Web Framework
+fastapi
+uvicorn
+streamlit
+
+# Development & Testing
+pytest
+pytest-cov
+black
+flake8
+pre-commit
+
+# Monitoring & Logging
+mlflow
+wandb
+prometheus-client

@@ -1,0 +1,204 @@
+version: '3.8'
+
+services:
+  # API Gateway
+  api-gateway:
+    build: ./api-gateway
+    ports:
+      - "8080:8080"
+    environment:
+      - NODE_ENV=production
+      - REDIS_URL=redis://redis:6379
+      - KAFKA_BROKERS=kafka:9092
+    depends_on:
+      - redis
+      - kafka
+    networks:
+      - market-network
+
+  # Data Ingestion Service
+  data-ingestion:
+    build: ./data-ingestion
+    environment:
+      - KAFKA_BROKERS=kafka:9092
+      - POSTGRES_URL=postgresql://user:password@postgres:5432/market_data
+      - REDIS_URL=redis://redis:6379
+    depends_on:
+      - kafka
+      - postgres
+      - redis
+    networks:
+      - market-network
+
+  # Feature Engineering Service
+  feature-engineering:
+    build: ./feature-engineering
+    environment:
+      - KAFKA_BROKERS=kafka:9092
+      - REDIS_URL=redis://redis:6379
+      - MODEL_REGISTRY_URL=http://mlflow:5000
+    depends_on:
+      - kafka
+      - redis
+      - mlflow
+    networks:
+      - market-network
+
+  # ML Model Service
+  ml-service:
+    build: ./ml-service
+    environment:
+      - KAFKA_BROKERS=kafka:9092
+      - MODEL_REGISTRY_URL=http://mlflow:5000
+      - REDIS_URL=redis://redis:6379
+    depends_on:
+      - kafka
+      - redis
+      - mlflow
+    networks:
+      - market-network
+
+  # Alert Service
+  alert-service:
+    build: ./alert-service
+    environment:
+      - KAFKA_BROKERS=kafka:9092
+      - REDIS_URL=redis://redis:6379
+      - SMTP_HOST=smtp.gmail.com
+      - SMTP_PORT=587
+    depends_on:
+      - kafka
+      - redis
+    networks:
+      - market-network
+
+  # Risk Management Service
+  risk-service:
+    build: ./risk-service
+    environment:
+      - KAFKA_BROKERS=kafka:9092
+      - POSTGRES_URL=postgresql://user:password@postgres:5432/risk_data
+      - REDIS_URL=redis://redis:6379
+    depends_on:
+      - kafka
+      - postgres
+      - redis
+    networks:
+      - market-network
+
+  # DeFi Integration Service
+  defi-service:
+    build: ./defi-service
+    environment:
+      - KAFKA_BROKERS=kafka:9092
+      - WEB3_PROVIDER_URL=https://mainnet.infura.io/v3/YOUR_KEY
+      - REDIS_URL=redis://redis:6379
+    depends_on:
+      - kafka
+      - redis
+    networks:
+      - market-network
+
+  # Kafka Message Broker
+  zookeeper:
+    image: confluentinc/cp-zookeeper:latest
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    networks:
+      - market-network
+
+  kafka:
+    image: confluentinc/cp-kafka:latest
+    depends_on:
+      - zookeeper
+    ports:
+      - "9092:9092"
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092,PLAINTEXT_HOST://kafka:29092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+    networks:
+      - market-network
+
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_DB: market_data
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - market-network
+
+  # Redis Cache
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    networks:
+      - market-network
+
+  # MLflow Model Registry
+  mlflow:
+    image: python:3.9-slim
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./mlflow:/mlflow
+    command: >
+      bash -c "pip install mlflow && 
+               mlflow server --host 0.0.0.0 --port 5000 --backend-store-uri sqlite:///mlflow.db --default-artifact-root /mlflow"
+    networks:
+      - market-network
+
+  # Prometheus Monitoring
+  prometheus:
+    image: prom/prometheus:latest
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+    networks:
+      - market-network
+
+  # Grafana Dashboard
+  grafana:
+    image: grafana/grafana:latest
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    volumes:
+      - grafana_data:/var/lib/grafana
+    networks:
+      - market-network
+
+  # Nginx Load Balancer
+  nginx:
+    image: nginx:alpine
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf
+      - ./ssl:/etc/nginx/ssl
+    depends_on:
+      - api-gateway
+    networks:
+      - market-network
+
+volumes:
+  postgres_data:
+  grafana_data:
+
+networks:
+  market-network:
+    driver: bridge

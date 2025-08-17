@@ -1,0 +1,102 @@
+# Enhanced Market Pattern Recognition System - Dependencies
+
+# Core Data Science Libraries
+numpy
+pandas
+scipy
+
+# Machine Learning
+scikit-learn
+xgboost
+lightgbm
+
+# Deep Learning & Transformers
+torch
+transformers
+datasets
+accelerate
+optuna
+
+# Data Visualization
+matplotlib
+seaborn
+plotly
+altair
+
+# Financial Data
+yfinance
+pandas-datareader
+alpha-vantage
+quandl
+
+# Technical Analysis
+ta-lib
+ta
+vectorbt
+
+# Real-time Streaming
+kafka-python
+confluent-kafka
+redis
+celery
+
+# API & Web
+fastapi
+uvicorn
+requests
+aiohttp
+websockets
+
+# Database
+sqlalchemy
+psycopg2-binary
+pymongo
+
+# Jupyter Environment
+jupyter
+ipywidgets
+tqdm
+
+# Testing
+pytest
+pytest-cov
+pytest-asyncio
+
+# Development
+black
+flake8
+mypy
+pre-commit
+
+# Additional Financial APIs
+polygon-api-client
+finnhub-python
+iexfinance
+intrinio-sdk
+
+# Dark Pool & Options Data
+unusual-whales
+flow-algo
+cheddar-flow
+
+# Economic Calendar
+economic-calendar
+forex-python
+
+# Time Series & Forecasting
+prophet
+pmdarima
+statsmodels
+arch
+
+# Reinforcement Learning
+stable-baselines3
+gym
+gym-anytrading
+ray[rllib]
+
+# Utilities
+python-dotenv
+schedule
+pytz
+python-dateutil

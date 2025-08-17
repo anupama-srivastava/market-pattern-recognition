@@ -1,0 +1,28 @@
+{
+  "symbols": ["AAPL", "GOOGL", "MSFT", "TSLA", "NVDA", "AMZN", "META", "AMD"],
+  "period": "2y",
+  "model_type": "lstm",
+  "sequence_length": 60,
+  "prediction_horizon": 5,
+  "epochs": 100,
+  "batch_size": 32,
+  "learning_rate": 0.001,
+  "test_size": 0.2,
+  "walk_forward": {
+    "enabled": true,
+    "train_window": 252,
+    "test_window": 63
+  },
+  "output_dir": "models/phase1",
+  "features": {
+    "technical_indicators": true,
+    "sentiment_analysis": false,
+    "volume_profile": true,
+    "market_regime": true
+  },
+  "evaluation": {
+    "metrics": ["accuracy", "precision", "recall", "f1", "roc_auc", "sharpe_ratio", "max_drawdown"],
+    "walk_forward": true,
+    "backtesting": true
+  }
+}
